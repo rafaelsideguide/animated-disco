@@ -1,0 +1,15 @@
+[project]
+name = "search-ir-interview"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "supabase",
+    "google-cloud-storage",
+    "python-dotenv",
+    "anthropic"
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.3",
+]

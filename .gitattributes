@@ -1,0 +1,2 @@
+data/corpus.jsonl filter=lfs diff=lfs merge=lfs -text
+data/index.pkl filter=lfs diff=lfs merge=lfs -text

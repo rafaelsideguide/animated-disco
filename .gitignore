@@ -1,0 +1,16 @@
+# Environment
+.env
+.venv/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Corpus is tracked via Git LFS (see .gitattributes)
+# index.pkl, queries.jsonl, judgments.jsonl are committed directly
+
+# Interview materials (interviewer only)
+PRD.md
+solution.md
