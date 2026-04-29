@@ -5,9 +5,17 @@ Search system over 50K web pages. Eval gives NDCG@10.
 ## Setup
 
 ```bash
+# Install Git LFS (required for large data files)
+brew install git-lfs
+git lfs install
+
+# Clone the repo
+git clone https://github.com/rafaelsideguide/animated-disco.git
+cd animated-disco
+
+# Install dependencies and run eval
 uv sync
-python scripts/build_index.py
-python scripts/run_eval.py
+uv run python scripts/run_eval.py
 ```
 
 ## Inspect the index
