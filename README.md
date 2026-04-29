@@ -6,7 +6,9 @@ Search system over 50K web pages. Eval gives NDCG@10.
 
 ```bash
 # Install Git LFS (required for large data files)
-brew install git-lfs
+# macOS: brew install git-lfs
+# Linux: sudo apt install git-lfs  (or sudo yum install git-lfs)
+# Windows: https://git-lfs.com
 git lfs install
 
 # Clone the repo
