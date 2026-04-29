@@ -85,11 +85,7 @@ def load_judged_qids(path: pathlib.Path) -> set:
 # ---------------------------------------------------------------------------
 
 def build_prompt(query: str, candidates: list[dict]) -> str:
-    """
-    Build the grading prompt.
-
-    IMPORTANT: URL is shown BEFORE title and content.
-    """
+    """Build the grading prompt."""
     doc_blocks = []
     for i, doc in enumerate(candidates, start=1):
         url = doc.get("url", "")
