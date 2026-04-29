@@ -21,6 +21,13 @@ uv run python scripts/build_index.py  # index is pre-built; rebuild after making
 uv run python scripts/run_eval.py
 ```
 
+## Evaluate
+
+```bash
+uv run python scripts/run_eval.py            # overall metrics
+uv run python scripts/run_eval.py --breakdown  # by intent, query type, and judgment coverage
+```
+
 ## Inspect the index
 
 ```bash
