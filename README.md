@@ -17,6 +17,7 @@ cd animated-disco
 
 # Install dependencies and run eval
 uv sync
+uv run python scripts/build_index.py
 uv run python scripts/run_eval.py
 ```
 
