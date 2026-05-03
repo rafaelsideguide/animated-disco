@@ -32,16 +32,16 @@ uv run python scripts/run_eval.py --breakdown  # by intent, query type, and judg
 
 ```bash
 # Look up a term
-python scripts/inspect.py term python
+uv run python scripts/inspect.py term python
 
 # Look up a document by ID
-python scripts/inspect.py doc 019b76da-ae1b-7180-b9ab-2cd156dd6769
+uv run python scripts/inspect.py doc 019b76da-ae1b-7180-b9ab-2cd156dd6769
 
 # Run a query and see ranked results with judgments
-python scripts/inspect.py query q001
+uv run python scripts/inspect.py query q001
 
 # Show all relevance judgments for a query
-python scripts/inspect.py judgments q001
+uv run python scripts/inspect.py judgments q001
 ```
 
 ## Notes
