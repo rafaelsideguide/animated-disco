@@ -21,18 +21,10 @@ def extract_text(doc: dict) -> str:
 def main():
     index = InvertedIndex()
 
-    # Pass 1: build vocabulary
-    print("Pass 1: building vocabulary...")
-    vocab = set()
-    with open(CORPUS_PATH, "r", encoding="utf-8") as f:
-        for line in f:
-            doc = json.loads(line)
-            tokens = tokenize(extract_text(doc))
-            vocab.update(tokens)
-    print(f"  Vocabulary size: {len(vocab):,}")
-
-    # Pass 2: index documents
-    print("Pass 2: indexing documents...")
+    # Index documents in a single pass. The vocabulary is built incrementally by
+    # add_document() (it populates term_dict), so a separate vocab-counting pass
+    # would just re-read and re-tokenize the whole corpus for no benefit.
+    print("Indexing documents...")
     total_docs = 0
     with open(CORPUS_PATH, "r", encoding="utf-8") as f:
         for line in f:
@@ -54,7 +46,7 @@ def main():
 
     avg_len = sum(index.doc_lengths) / total_docs if total_docs else 0
     print(f"\nDone.")
-    print(f"  Vocab size : {len(vocab):,}")
+    print(f"  Vocab size : {len(index.term_dict):,}")
     print(f"  Total docs : {total_docs:,}")
     print(f"  Avg doc len: {avg_len:.1f} tokens")
 
