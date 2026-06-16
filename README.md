@@ -46,6 +46,15 @@ uv run python scripts/inspect.py judgments q001
 
 ## Notes
 
+### Tokenizer
+
+`tokenize()` (in `src/tokenizer.py`) runs at both index-build and query time:
+Unicode normalization + accent folding + casefold, `\w+` tokenization (splits
+hyphens/dashes/punctuation, keeps underscores and alphanumeric codes whole),
+English stopword removal, and guarded Snowball stemming (alphabetic tokens
+longer than 2 chars). **Changing the tokenizer requires rebuilding the index**
+(`scripts/build_index.py`) so indexed and query tokens stay consistent.
+
 AI tools (Cursor, Claude Code, etc.) are encouraged throughout the interview.
 
 Judgments were generated with LLM assistance.
