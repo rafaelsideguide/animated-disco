@@ -3,15 +3,17 @@ import unicodedata
 
 import snowballstemmer
 
-# Standard English stopword list (NLTK's 179-word list), embedded to avoid a
-# runtime data download. Lowercase; matched after normalization.
+# Standard English stopword list (NLTK's list, minus the apostrophe-bearing
+# contraction forms which can never match: the `\w+` tokenizer strips
+# apostrophes, so "don't" tokenizes to "don" + "t" — both already listed).
+# Embedded to avoid a runtime data download. Lowercase; matched post-normalization.
 STOPWORDS: frozenset[str] = frozenset({
     "i", "me", "my", "myself", "we", "our", "ours", "ourselves", "you",
-    "you're", "you've", "you'll", "you'd", "your", "yours", "yourself",
-    "yourselves", "he", "him", "his", "himself", "she", "she's", "her", "hers",
-    "herself", "it", "it's", "its", "itself", "they", "them", "their",
+    "your", "yours", "yourself",
+    "yourselves", "he", "him", "his", "himself", "she", "her", "hers",
+    "herself", "it", "its", "itself", "they", "them", "their",
     "theirs", "themselves", "what", "which", "who", "whom", "this", "that",
-    "that'll", "these", "those", "am", "is", "are", "was", "were", "be",
+    "these", "those", "am", "is", "are", "was", "were", "be",
     "been", "being", "have", "has", "had", "having", "do", "does", "did",
     "doing", "a", "an", "the", "and", "but", "if", "or", "because", "as",
     "until", "while", "of", "at", "by", "for", "with", "about", "against",
@@ -21,13 +23,12 @@ STOPWORDS: frozenset[str] = frozenset({
     "where", "why", "how", "all", "any", "both", "each", "few", "more",
     "most", "other", "some", "such", "no", "nor", "not", "only", "own",
     "same", "so", "than", "too", "very", "s", "t", "can", "will", "just",
-    "don", "don't", "should", "should've", "now", "d", "ll", "m", "o", "re",
-    "ve", "y", "ain", "aren", "aren't", "couldn", "couldn't", "didn",
-    "didn't", "doesn", "doesn't", "hadn", "hadn't", "hasn", "hasn't",
-    "haven", "haven't", "isn", "isn't", "ma", "mightn", "mightn't", "mustn",
-    "mustn't", "needn", "needn't", "shan", "shan't", "shouldn", "shouldn't",
-    "wasn", "wasn't", "weren", "weren't", "won", "won't", "wouldn",
-    "wouldn't",
+    "don", "should", "now", "d", "ll", "m", "o", "re",
+    "ve", "y", "ain", "aren", "couldn", "didn",
+    "doesn", "hadn", "hasn",
+    "haven", "isn", "ma", "mightn", "mustn",
+    "needn", "shan", "shouldn",
+    "wasn", "weren", "won", "wouldn",
 })
 
 _stemmer = snowballstemmer.stemmer("english")
