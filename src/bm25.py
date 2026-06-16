@@ -26,13 +26,14 @@ def rank(query_tokens: list[str], index, k: int = 10) -> list[tuple[str, float]]
         if token not in index.term_dict:
             continue
         term_id = index.term_dict[token]
-        postings = index.postings[term_id]
+        doc_ids, tfs, start, end = index.postings(term_id)
         # idf depends only on the term, not the document — compute once per term.
-        df = len(postings)
+        df = end - start
         idf = log((n_docs - df + 0.5) / (df + 0.5) + 1)
-        for internal_doc_id, tf in postings:
+        for i in range(start, end):
+            internal_doc_id = doc_ids[i]
             doc_len = doc_lengths[internal_doc_id]
-            tf_norm = (tf * (K1 + 1)) / (tf + K1 * (1 - B + B * doc_len / avg_doc_len))
+            tf_norm = (tfs[i] * (K1 + 1)) / (tfs[i] + K1 * (1 - B + B * doc_len / avg_doc_len))
             s = idf * tf_norm
             scores[internal_doc_id] = scores.get(internal_doc_id, 0.0) + s
 

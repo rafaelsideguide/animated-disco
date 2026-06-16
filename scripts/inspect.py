@@ -47,11 +47,11 @@ def cmd_term(index, args):
         print(f"Term '{term}' not found in index.")
         return
     term_id = index.term_dict[term]
-    postings = index.postings[term_id]
-    df = len(postings)
+    doc_ids, tfs, start, end = index.postings(term_id)
+    df = end - start
     print(f"Term: '{term}'")
     print(f"  df (docs containing term): {df:,}")
-    top5 = sorted(postings, key=lambda x: x[1], reverse=True)[:5]
+    top5 = sorted(zip(doc_ids[start:end], tfs[start:end]), key=lambda x: x[1], reverse=True)[:5]
     print("  Top 5 docs by tf:")
     for internal_id, tf in top5:
         meta = index.doc_meta[internal_id]
