@@ -6,16 +6,11 @@ import pickle
 from pathlib import Path
 
 from tokenizer import tokenize
-from index import InvertedIndex
+from index import InvertedIndex, FIELDS
+from parse import parse_document
 
 CORPUS_PATH = Path(__file__).parent.parent / "data" / "corpus.jsonl"
 INDEX_PATH = Path(__file__).parent.parent / "data" / "index.pkl"
-
-
-def extract_text(doc: dict) -> str:
-    title = doc.get("title") or ""
-    body = doc.get("markdown") or ""
-    return title + " " + body[:500]
 
 
 def main():
@@ -29,10 +24,11 @@ def main():
     with open(CORPUS_PATH, "r", encoding="utf-8") as f:
         for line in f:
             doc = json.loads(line)
-            tokens = tokenize(extract_text(doc))
+            fields = parse_document(doc)
+            tokenized = {f: tokenize(fields[f]) for f in FIELDS}
             index.add_document(
                 doc["id"],
-                tokens,
+                tokenized,
                 {"url": doc["url"], "title": doc.get("title", "")},
             )
             total_docs += 1

@@ -1,43 +1,43 @@
-# BM25 ranker
-# Parameters tuned by @rfc on 1K-query holdout from prod logs, 2025-Q3.
-# Do not modify without re-running tune_bm25.py against current corpus.
+# BM25F ranker over fielded postings.
+# Field boosts and per-field length-normalization (B) tuned by hand; retune with
+# a train/test holdout (relevance option C) before trusting exact values.
 
 from heapq import nlargest
 from math import log
 
-K1 = 1.2
-B  = 0.75
+from index import FIELDS
 
-
-def score(tf: int, df: int, doc_len: int, avg_doc_len: float, n_docs: int) -> float:
-    idf = log((n_docs - df + 0.5) / (df + 0.5) + 1)
-    tf_norm = (tf * (K1 + 1)) / (tf + K1 * (1 - B + B * doc_len / avg_doc_len))
-    return idf * tf_norm
+K1 = 1.2   # single global saturation parameter (not per-field)
+BOOST = {"title": 3.0, "url": 2.0, "headings": 1.5, "body": 1.0}
+B = {"title": 0.0, "url": 0.2, "headings": 0.4, "body": 0.75}
 
 
 def rank(query_tokens: list[str], index, k: int = 10) -> list[tuple[str, float]]:
     scores: dict[int, float] = {}
 
-    doc_lengths = index.doc_lengths
-    avg_doc_len = index.avg_doc_len
     n_docs = index.n_docs
+    avgdl = index.avgdl
+    field_lengths = index.field_lengths
 
     for token in query_tokens:
         if token not in index.term_dict:
             continue
         term_id = index.term_dict[token]
-        doc_ids, tfs, start, end = index.postings(term_id)
-        # idf depends only on the term, not the document — compute once per term.
+        doc_ids, post_tf, start, end = index.postings(term_id)
         df = end - start
         idf = log((n_docs - df + 0.5) / (df + 0.5) + 1)
         for i in range(start, end):
-            internal_doc_id = doc_ids[i]
-            doc_len = doc_lengths[internal_doc_id]
-            tf_norm = (tfs[i] * (K1 + 1)) / (tfs[i] + K1 * (1 - B + B * doc_len / avg_doc_len))
-            s = idf * tf_norm
-            scores[internal_doc_id] = scores.get(internal_doc_id, 0.0) + s
+            doc = doc_ids[i]
+            wtf = 0.0
+            for f in FIELDS:
+                tf = post_tf[f][i]
+                if tf:
+                    adl = avgdl[f]
+                    denom = 1 - B[f] + B[f] * (field_lengths[f][doc] / adl if adl else 0.0)
+                    wtf += BOOST[f] * tf / denom
+            if wtf:
+                scores[doc] = scores.get(doc, 0.0) + idf * wtf / (K1 + wtf)
 
-    # nlargest is equivalent to sorted(..., reverse=True)[:k], including the
-    # stable tie-break, so result ordering is identical to the previous sort.
+    # nlargest == sorted(..., reverse=True)[:k] incl. stable tie-break.
     ranked = nlargest(k, scores.items(), key=lambda x: x[1])
-    return [(index.doc_ids[internal_doc_id], s) for internal_doc_id, s in ranked]
+    return [(index.doc_ids[doc], s) for doc, s in ranked]

@@ -9,9 +9,9 @@ from bm25 import rank
 class TestSmokePipeline(unittest.TestCase):
     def setUp(self):
         self.index = InvertedIndex()
-        self.index.add_document("a", ["python", "web", "framework"], {"url": "http://example.com/a", "title": "Python Web Framework"})
-        self.index.add_document("b", ["python", "data", "science"], {"url": "http://example.com/b", "title": "Python Data Science"})
-        self.index.add_document("c", ["javascript", "web", "frontend"], {"url": "http://example.com/c", "title": "JavaScript Web Frontend"})
+        self.index.add_document("a", {"body": ["python", "web", "framework"]}, {"url": "http://example.com/a", "title": "Python Web Framework"})
+        self.index.add_document("b", {"body": ["python", "data", "science"]}, {"url": "http://example.com/b", "title": "Python Data Science"})
+        self.index.add_document("c", {"body": ["javascript", "web", "frontend"]}, {"url": "http://example.com/c", "title": "JavaScript Web Frontend"})
         self.index.finalize()
 
     def test_python_web_returns_doc_a_first(self):

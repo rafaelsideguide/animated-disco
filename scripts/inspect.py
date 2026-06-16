@@ -9,6 +9,7 @@ import argparse
 from pathlib import Path
 
 from search import search, get_doc
+from index import FIELDS
 
 INDEX_PATH = Path(__file__).parent.parent / "data" / "index.pkl"
 QUERIES_PATH = Path(__file__).parent.parent / "data" / "queries.jsonl"
@@ -47,12 +48,13 @@ def cmd_term(index, args):
         print(f"Term '{term}' not found in index.")
         return
     term_id = index.term_dict[term]
-    doc_ids, tfs, start, end = index.postings(term_id)
+    doc_ids, post_tf, start, end = index.postings(term_id)
     df = end - start
     print(f"Term: '{term}'")
     print(f"  df (docs containing term): {df:,}")
-    top5 = sorted(zip(doc_ids[start:end], tfs[start:end]), key=lambda x: x[1], reverse=True)[:5]
-    print("  Top 5 docs by tf:")
+    rows = [(doc_ids[i], sum(post_tf[f][i] for f in FIELDS)) for i in range(start, end)]
+    top5 = sorted(rows, key=lambda x: x[1], reverse=True)[:5]
+    print("  Top 5 docs by total tf:")
     for internal_id, tf in top5:
         meta = index.doc_meta[internal_id]
         doc_id = index.doc_ids[internal_id]
