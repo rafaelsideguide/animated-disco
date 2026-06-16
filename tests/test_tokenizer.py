@@ -47,6 +47,11 @@ class TestTokenize(unittest.TestCase):
         # Guard: tokens <= 2 chars or non-alpha are passed through unstemmed.
         self.assertEqual(tokenize("go"), ["go"])
 
+    def test_stopwords_filtered_before_stemming(self):
+        # "only" is a stopword, but its stem "onli" is not. Filtering must run on
+        # the raw token (pre-stem), so "only" is dropped entirely. Pins the order.
+        self.assertEqual(tokenize("only"), [])
+
     def test_empty_string(self):
         self.assertEqual(tokenize(""), [])
 
