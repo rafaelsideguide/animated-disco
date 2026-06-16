@@ -10,6 +10,7 @@ from index import FIELDS
 K1 = 1.2   # single global saturation parameter (not per-field)
 BOOST = {"title": 3.0, "url": 2.0, "headings": 1.5, "body": 1.0}
 B = {"title": 0.0, "url": 0.2, "headings": 0.4, "body": 0.75}
+assert set(BOOST) == set(FIELDS) and set(B) == set(FIELDS), "BOOST/B must cover exactly FIELDS"
 
 
 def rank(query_tokens: list[str], index, k: int = 10) -> list[tuple[str, float]]:
@@ -33,7 +34,8 @@ def rank(query_tokens: list[str], index, k: int = 10) -> list[tuple[str, float]]
                 tf = post_tf[f][i]
                 if tf:
                     adl = avgdl[f]
-                    denom = 1 - B[f] + B[f] * (field_lengths[f][doc] / adl if adl else 0.0)
+                    ratio = field_lengths[f][doc] / adl if adl else 0.0
+                    denom = 1 - B[f] + B[f] * ratio
                     wtf += BOOST[f] * tf / denom
             if wtf:
                 scores[doc] = scores.get(doc, 0.0) + idf * wtf / (K1 + wtf)

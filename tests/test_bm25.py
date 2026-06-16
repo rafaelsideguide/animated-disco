@@ -39,6 +39,24 @@ class TestBM25FFieldBoost(unittest.TestCase):
         ranked = rank(["python"], idx, k=2)
         self.assertEqual(ranked[0][0], "t")
 
+    def test_url_field_contributes(self):
+        # A term present only in the url field is still retrievable and scored.
+        idx = InvertedIndex()
+        idx.add_document("u", {"url": ["revwatches"]}, {"url": "", "title": ""})
+        idx.add_document("o", {"body": ["other"]}, {"url": "", "title": ""})
+        idx.finalize()
+        ranked = rank(["revwatches"], idx, k=5)
+        self.assertEqual([d for d, _ in ranked], ["u"])
+
+    def test_longer_body_scores_lower_for_same_tf(self):
+        # Per-field length normalization (B[body]=0.75): same tf, longer body -> lower score.
+        idx = InvertedIndex()
+        idx.add_document("short", {"body": ["python"]}, {"url": "", "title": ""})
+        idx.add_document("long", {"body": ["python"] + ["filler"] * 20}, {"url": "", "title": ""})
+        idx.finalize()
+        ranked = rank(["python"], idx, k=2)
+        self.assertEqual(ranked[0][0], "short")
+
 
 if __name__ == "__main__":
     unittest.main()
