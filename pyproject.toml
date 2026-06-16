@@ -6,7 +6,8 @@ dependencies = [
     "supabase",
     "google-cloud-storage",
     "python-dotenv",
-    "anthropic"
+    "anthropic",
+    "snowballstemmer>=3.1.1",
 ]
 
 [dependency-groups]
