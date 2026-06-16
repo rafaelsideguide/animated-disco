@@ -1,5 +1,6 @@
 import re
 import unicodedata
+from functools import lru_cache
 
 import snowballstemmer
 
@@ -37,10 +38,24 @@ _TOKEN_RE = re.compile(r"\w+", re.UNICODE)
 
 
 def _normalize(text: str) -> str:
-    """NFKD-normalize, strip combining marks (accent-fold), and casefold."""
+    """NFKD-normalize, strip combining marks (accent-fold), and casefold.
+
+    Pure-ASCII text has no NFKD decomposition and no combining marks, so the
+    fast path is just casefold() — identical output, skipping the per-character
+    Unicode scan that dominates tokenization cost on (mostly English) input.
+    """
+    if text.isascii():
+        return text.casefold()
     decomposed = unicodedata.normalize("NFKD", text)
     no_marks = "".join(c for c in decomposed if not unicodedata.combining(c))
     return no_marks.casefold()
+
+
+@lru_cache(maxsize=None)
+def _stem_word(token: str) -> str:
+    """Snowball stem of a single word, memoized — the vocabulary is finite and
+    tokens repeat heavily across a corpus, so this avoids re-stemming."""
+    return _stemmer.stemWord(token)
 
 
 def _stem(token: str) -> str:
@@ -50,7 +65,7 @@ def _stem(token: str) -> str:
     identifiers (e.g. ``guild_id``, ``3c7wrnfl0ng288476``) from being mangled.
     """
     if len(token) > 2 and token.isalpha():
-        return _stemmer.stemWord(token)
+        return _stem_word(token)
     return token
 
 

@@ -8,9 +8,12 @@ def search(index, query: str, k: int = 10) -> list[tuple[str, float]]:
 
 
 def get_doc(index, doc_id: str) -> dict | None:
-    # Build a reverse lookup from string doc_id to internal integer id.
-    # In a hot path you'd cache this; here we rebuild each call to stay simple.
-    reverse = {ext_id: i for i, ext_id in enumerate(index.doc_ids)}
+    # Reverse lookup from string doc_id to internal integer id, cached on the
+    # index on first use (works with already-pickled indexes that lack it).
+    reverse = getattr(index, "_doc_id_reverse", None)
+    if reverse is None:
+        reverse = {ext_id: i for i, ext_id in enumerate(index.doc_ids)}
+        index._doc_id_reverse = reverse
 
     internal_id = reverse.get(doc_id)
     if internal_id is None:
