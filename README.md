@@ -55,6 +55,15 @@ English stopword removal, and guarded Snowball stemming (alphabetic tokens
 longer than 2 chars). **Changing the tokenizer requires rebuilding the index**
 (`scripts/build_index.py`) so indexed and query tokens stay consistent.
 
+### Fielded BM25F
+
+Documents are parsed into four fields — `title`, `headings`, `url` (host + path
+slug), and `body` (markdown-cleaned, capped at 3000 chars) — by `src/parse.py`.
+The index (`src/index.py`) stores per-field term frequencies and lengths;
+`src/bm25.py` scores with BM25F, weighting fields via `BOOST` and normalizing
+each field's length via per-field `B`. Changing parsing, fields, or weights
+requires rebuilding the index.
+
 AI tools (Cursor, Claude Code, etc.) are encouraged throughout the interview.
 
 Judgments were generated with LLM assistance.
