@@ -21,6 +21,16 @@ class TestCleanMarkdown(unittest.TestCase):
     def test_empty(self):
         self.assertEqual(clean_markdown(""), "")
 
+    def test_preserves_underscores_in_identifiers(self):
+        # snake_case identifiers must survive cleaning (tokenizer keeps underscores).
+        self.assertEqual(clean_markdown("call get_user_by_id then guild_id"),
+                         "call get_user_by_id then guild_id")
+
+    def test_strips_stray_brackets(self):
+        out = clean_markdown("text [a [b] c](url) end")
+        self.assertNotIn("[", out)
+        self.assertNotIn("]", out)
+
 
 class TestExtractHeadings(unittest.TestCase):
     def test_collects_heading_text(self):

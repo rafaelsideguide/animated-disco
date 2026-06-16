@@ -7,7 +7,7 @@ _IMAGE_RE = re.compile(r"!\[[^\]]*\]\([^)]*\)")     # ![alt](url)
 _LINK_RE = re.compile(r"\[([^\]]*)\]\([^)]*\)")     # [text](url) -> text
 _URL_RE = re.compile(r"https?://\S+")               # bare urls
 _LIST_MARKER_RE = re.compile(r"^\s*([-*+]|\d+\.)\s+", re.M)
-_MD_NOISE_RE = re.compile(r"[#>*_`|]")              # leftover markdown markers
+_MD_NOISE_RE = re.compile(r"[#>*`|\[\]]")           # leftover markdown markers (keep underscores: snake_case)
 _HEADING_LINE_RE = re.compile(r"^\s{0,3}#{1,6}\s+(.*)$", re.M)
 _WS_RE = re.compile(r"\s+")
 
