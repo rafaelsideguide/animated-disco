@@ -71,9 +71,12 @@ noise, indexes more body, and replaces single-field BM25 with **true BM25F**.
 
 Constants (tunable):
 ```
-K1 = 1.2
+K1 = 1.2   # single global saturation parameter (not per-field)
 BOOST = {"title": 3.0, "url": 2.0, "headings": 1.5, "body": 1.0}
-B     = {"title": 0.5, "url": 0.5, "headings": 0.5, "body": 0.75}
+# Per-field length-normalization strength. Free-text body gets the classic ~0.75
+# (long bodies match terms by chance → normalize); short, length-invariant fields
+# get near-zero (title length is not a relevance signal, and title tf is ~1).
+B     = {"title": 0.0, "url": 0.2, "headings": 0.4, "body": 0.75}
 ```
 Per query term `t` with document frequency `df`:
 ```
