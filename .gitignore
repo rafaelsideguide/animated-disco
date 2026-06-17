@@ -14,3 +14,8 @@ __pycache__/
 # Interview materials (interviewer only)
 PRD.md
 solution.md
+
+# Re-pooling transient artifacts (judgments.jsonl is the durable record)
+data/repool_candidates.json
+data/repool_grades.jsonl
+data/repool_batches/
