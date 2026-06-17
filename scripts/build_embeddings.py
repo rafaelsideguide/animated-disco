@@ -1,4 +1,8 @@
 import sys, os
+# Remove scripts/ from sys.path so scripts/inspect.py doesn't shadow stdlib
+# inspect (numpy/torch import it internally). Matches run_eval/generate_* scripts.
+_scripts_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path = [p for p in sys.path if os.path.abspath(p) != _scripts_dir]
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 import json
