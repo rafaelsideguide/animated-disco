@@ -68,20 +68,48 @@ requires rebuilding the index.
 
 `src/dense.py` adds a multilingual sentence-transformer + hnswlib kNN retriever
 (`scripts/build_embeddings.py`); `src/rerank.py` reranks BM25F's top-100 with a
-multilingual cross-encoder over `data/doc_text.pkl`. Evaluate either via
-`run_eval.py --retriever {dense,bm25_rerank}`.
+multilingual cross-encoder over `data/doc_text.pkl`.
+
+### Hybrid retrieval
+
+`src/hybrid.py` combines BM25F and dense. `hybrid_rrf` reciprocal-rank-fuses
+(RRF, `k=60`, equal weights) BM25F's and dense's top-100 ranked lists — no model
+at query time, only ranks. `hybrid_rerank` runs the cross-encoder over the
+deduplicated **union** of BM25F + dense top-100 (so dense-only candidates reach
+the reranker, unlike `bm25_rerank` which only sees BM25F's pool).
+
+Evaluate any retriever via
+`run_eval.py --retriever {bm25,dense,bm25_rerank,hybrid_rrf,hybrid_rerank}`.
 
 ### Re-pooled judgments
 
 The original `judgments.jsonl` was a depth-20 pool from the BM25 baseline, which
-under-measured the semantic/rerank retrievers (they surface relevant docs the
-pool never judged). `judgments.jsonl` was enriched (source
-`claude-code-pooled-2026`) by pooling the top-10 of BM25F + dense + rerank per
-query and grading the new docs with Claude Code subagents:
+under-measured retrievers that surface relevant docs the pool never judged.
+`judgments.jsonl` is enriched (source `claude-code-pooled-2026`) by pooling the
+**top-25 of all five retrievers** — BM25F, dense, rerank, hybrid_rrf,
+hybrid_rerank — per query and grading the new docs with Claude Code subagents:
 `scripts/build_repool_candidates.py` → `scripts/repool_batches.py split` →
 grade batches → `scripts/repool_batches.py gather` →
-`scripts/merge_repool_grades.py`. Top-10 judgment coverage rose ~0.60 → 0.99; on
-the enriched qrels NDCG@10 is BM25F 0.74, dense 0.60, BM25F+rerank 0.79.
+`scripts/merge_repool_grades.py`. (The pool started at the top-10 of BM25F +
+dense + rerank; it was deepened to top-25 and extended to the two hybrids so
+every retriever's top-10 is judged on equal footing.) Top-10 judgment coverage
+is ~1.00 for all five.
+
+On the re-pooled qrels (n=200), NDCG@10 / MRR / Recall@100:
+
+| retriever      | NDCG@10 | MRR  | Recall@100 |
+|----------------|:-------:|:----:|:----------:|
+| bm25 (BM25F)   |  0.70   | 0.96 |    0.76    |
+| dense          |  0.62   | 0.86 |    0.57    |
+| bm25_rerank    |  0.75   | 0.96 |    0.76    |
+| hybrid_rrf     |  0.71   | 0.93 |    0.87    |
+| hybrid_rerank  |  0.72   | 0.94 |    0.82    |
+
+`bm25_rerank` leads on NDCG@10. Both hybrids beat plain BM25F and dense, but
+adding dense candidates to the reranker (`hybrid_rerank`) does not overtake
+reranking BM25F alone on top-10 precision. The hybrids' clear win is
+**Recall@100** (0.87 / 0.82 vs 0.76) — fusing dense with BM25F surfaces more
+relevant docs deep in the list, even when it doesn't reorder the top-10 better.
 
 AI tools (Cursor, Claude Code, etc.) are encouraged throughout the interview.
 
