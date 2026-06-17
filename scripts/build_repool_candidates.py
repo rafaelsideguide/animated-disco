@@ -50,6 +50,7 @@ def main():
 
     out = []
     total_new = 0
+    empty_text = 0
     for qid, row in queries.items():
         q = row["query"]
         bm = [d for d, _ in search(index, q, k=100)]
@@ -62,12 +63,17 @@ def main():
         for doc_id in new:
             i = reverse.get(doc_id)
             url = index.doc_meta[i].get("url", "") if i is not None else ""
-            docs.append({"doc_id": doc_id, "text": grader_doc_text(url, doc_text.get(doc_id, ""))})
+            dt = doc_text.get(doc_id, "")
+            if not dt:
+                empty_text += 1
+            docs.append({"doc_id": doc_id, "text": grader_doc_text(url, dt)})
         out.append({"qid": qid, "query": q, "docs": docs})
         total_new += len(docs)
 
     with open(CANDIDATES_PATH, "w") as f:
         json.dump(out, f)
+    if empty_text:
+        print(f"  WARNING: {empty_text} candidate docs had empty doc_text (corpus drift?)")
     print(f"Done. {len(out)} queries, {total_new:,} new candidate docs -> {CANDIDATES_PATH}")
 
 

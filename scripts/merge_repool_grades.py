@@ -12,9 +12,17 @@ GRADES_PATH = DATA / "repool_grades.jsonl"
 SOURCE = "claude-code-pooled-2026"
 
 
+def _read_jsonl(path):
+    with open(path) as f:
+        return [json.loads(line) for line in f]
+
+
 def main():
-    existing = [json.loads(l) for l in open(JUDGMENTS_PATH)]
-    grades = [json.loads(l) for l in open(GRADES_PATH)]
+    if not GRADES_PATH.exists():
+        raise SystemExit(f"{GRADES_PATH} not found — run the grading step "
+                         f"(build candidates, then grade them) before merging.")
+    existing = _read_jsonl(JUDGMENTS_PATH)
+    grades = _read_jsonl(GRADES_PATH)
     new_rows = merge_grades(existing, grades, SOURCE)
     with open(JUDGMENTS_PATH, "a") as f:
         for r in new_rows:

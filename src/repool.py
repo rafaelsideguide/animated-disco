@@ -20,14 +20,18 @@ def grader_doc_text(url: str, doc_text: str) -> str:
 def merge_grades(existing_rows: list[dict], grade_rows: list[dict], source: str) -> list[dict]:
     """Return judgment rows to append: each (qid, doc_id) grade not already
     present in existing_rows (and not duplicated within grade_rows), tagged with
-    source. First grade for a (qid, doc_id) wins."""
+    source. First grade for a (qid, doc_id) wins. Rows missing qid/doc_id or whose
+    grade is not 0/1/2 are skipped (defensive against partial grading output)."""
     judged = {(r["qid"], r["doc_id"]) for r in existing_rows}
     seen = set()
     out = []
     for g in grade_rows:
-        key = (g["qid"], g["doc_id"])
+        qid, doc_id, grade = g.get("qid"), g.get("doc_id"), g.get("grade")
+        if qid is None or doc_id is None or grade not in (0, 1, 2):
+            continue
+        key = (qid, doc_id)
         if key in judged or key in seen:
             continue
         seen.add(key)
-        out.append({"qid": g["qid"], "doc_id": g["doc_id"], "grade": g["grade"], "source": source})
+        out.append({"qid": qid, "doc_id": doc_id, "grade": grade, "source": source})
     return out

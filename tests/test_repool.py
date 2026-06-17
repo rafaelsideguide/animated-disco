@@ -48,6 +48,12 @@ class TestMergeGrades(unittest.TestCase):
         self.assertEqual(len(out), 1)
         self.assertEqual(out[0]["grade"], 1)
 
+    def test_skips_missing_grade_field(self):
+        self.assertEqual(merge_grades([], [{"qid": "q1", "doc_id": "a"}], "s"), [])
+
+    def test_skips_invalid_grade_value(self):
+        self.assertEqual(merge_grades([], [{"qid": "q1", "doc_id": "a", "grade": 5}], "s"), [])
+
 
 if __name__ == "__main__":
     unittest.main()
