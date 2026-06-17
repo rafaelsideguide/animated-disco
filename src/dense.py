@@ -74,3 +74,36 @@ def embed_text(fields: dict) -> str:
     headings = fields.get("headings", "")
     body = fields.get("body", "")[:BODY_EMBED_CHARS]
     return f"{title} {headings} {body}".strip()
+
+
+class Embedder:
+    """Lazy sentence-transformers wrapper producing L2-normalized float32 vectors."""
+
+    def __init__(self, model_name: str = MODEL_NAME):
+        self.model_name = model_name
+        self._model = None
+
+    def _ensure(self):
+        if self._model is None:
+            from sentence_transformers import SentenceTransformer
+            self._model = SentenceTransformer(self.model_name)
+        return self._model
+
+    def encode(self, texts: list[str], batch_size: int = 64) -> np.ndarray:
+        model = self._ensure()
+        vectors = model.encode(
+            texts,
+            batch_size=batch_size,
+            normalize_embeddings=True,
+            convert_to_numpy=True,
+        )
+        return vectors.astype(np.float32)
+
+
+def dense_search(vindex: VectorIndex, embedder: Embedder, query: str, k: int = 10) -> list[tuple[str, float]]:
+    vector = embedder.encode([query])[0]
+    return vindex.query(vector, k=k)
+
+
+def load_dense(directory) -> tuple[VectorIndex, Embedder]:
+    return VectorIndex.load(directory), Embedder()

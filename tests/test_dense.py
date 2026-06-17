@@ -63,5 +63,16 @@ class TestEmbedText(unittest.TestCase):
         self.assertEqual(embed_text({}), "")
 
 
+class TestEmbedderIntegration(unittest.TestCase):
+    def test_encode_shape_and_unit_norm(self):
+        try:
+            from dense import Embedder
+            v = Embedder().encode(["hello world"])
+        except Exception as e:  # model download/load unavailable (offline/CI)
+            raise unittest.SkipTest(f"embedding model unavailable: {e}")
+        self.assertEqual(v.shape, (1, 384))
+        self.assertAlmostEqual(float(np.linalg.norm(v[0])), 1.0, places=3)
+
+
 if __name__ == "__main__":
     unittest.main()
