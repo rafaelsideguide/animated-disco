@@ -70,7 +70,7 @@ def judgment_coverage(results, judgments, k=10):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--breakdown", action="store_true")
-    parser.add_argument("--retriever", choices=["bm25", "dense"], default="bm25")
+    parser.add_argument("--retriever", choices=["bm25", "dense", "bm25_rerank"], default="bm25")
     args = parser.parse_args()
 
     queries = load_jsonl(DATA / "queries.jsonl")
@@ -81,6 +81,17 @@ def main():
         vindex, embedder = load_dense(DATA)
         def retrieve(q):
             return dense_search(vindex, embedder, q, k=100)
+    elif args.retriever == "bm25_rerank":
+        import pickle
+        from search import search
+        from rerank import load_doc_text, Reranker, rerank
+        with open(DATA / "index.pkl", "rb") as f:
+            index = pickle.load(f)
+        doc_text = load_doc_text(DATA)
+        reranker = Reranker()
+        def retrieve(q):
+            candidates = [d for d, _ in search(index, q, k=100)]
+            return rerank(reranker, q, candidates, doc_text, k=100)
     else:
         import pickle
         from search import search
