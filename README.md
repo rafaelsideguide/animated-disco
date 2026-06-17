@@ -79,7 +79,30 @@ deduplicated **union** of BM25F + dense top-100 (so dense-only candidates reach
 the reranker, unlike `bm25_rerank` which only sees BM25F's pool).
 
 Evaluate any retriever via
-`run_eval.py --retriever {bm25,dense,bm25_rerank,hybrid_rrf,hybrid_rerank}`.
+`run_eval.py --retriever {bm25,dense,bm25_rerank,hybrid_rrf,hybrid_rerank,router}`.
+
+### Cost routing
+
+`src/route.py` implements a cascade that trades off a small NDCG@10 loss for
+dramatic cross-encoder savings. The `router` retriever (`--retriever router`,
+tuned via `scripts/tune_router.py`) runs BM25F first, then uses a confidence
+gate to decide whether to return BM25F alone or escalate to a more costly model.
+If the margin between BM25F's top score and its k-th score (normalized:
+`(s₀ − sₖ)/s₀`) meets the threshold `TAU = 0.30`, the query is served by BM25F
+with no further ranking. Otherwise, the router escalates: non-ASCII queries
+route to `hybrid_rrf` (dense + BM25F fusion, no model), all others to
+`bm25_rerank` (cross-encoder reranking of BM25F's top-100).
+
+On the re-pooled qrels (n=200), the router achieves **NDCG@10 0.74** (within
+0.01 of `bm25_rerank`'s 0.75) while invoking the cross-encoder on only **108 /
+200 queries** (~46% fewer calls than always-`bm25_rerank`). Cross-encoder
+invocations cost ~10,800 query-doc pair scores vs ~20,000 for always-reranking.
+Tier breakdown: 88 queries served by BM25F alone, 4 by hybrid_rrf, 108 by
+bm25_rerank.
+
+**Caveat:** `TAU` is tuned and reported on the same 200 queries with no
+train/test holdout, so this number is a near-upper-bound, not a held-out
+estimate. Further tuning on a held-out set may differ.
 
 ### Re-pooled judgments
 
