@@ -14,7 +14,7 @@ def new_candidates(pools: list[list[str]], judged: set) -> list[str]:
 
 def grader_doc_text(url: str, doc_text: str) -> str:
     """Grader-facing text for a candidate: URL plus the cleaned doc text."""
-    return f"URL: {url}\n{doc_text}".strip()
+    return f"URL: {url or ''}\n{doc_text}".strip()
 
 
 def merge_grades(existing_rows: list[dict], grade_rows: list[dict], source: str) -> list[dict]:

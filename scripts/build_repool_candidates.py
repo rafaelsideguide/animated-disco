@@ -55,6 +55,8 @@ def main():
         q = row["query"]
         bm = [d for d, _ in search(index, q, k=100)]
         dn = [d for d, _ in dense_search(vindex, embedder, q, k=POOL_DEPTH)]
+        # Rerank sees BM25F's full top-100 (not bm[:POOL_DEPTH]) so it can surface
+        # rank-11..100 docs into its top-POOL_DEPTH — the point of reranking.
         rr = [d for d, _ in rerank(reranker, q, bm, doc_text, k=POOL_DEPTH)]
         new = new_candidates([bm[:POOL_DEPTH], dn, rr], judged[qid])
         if not new:
