@@ -13,6 +13,7 @@ from search import search
 from dense import load_dense, dense_search
 from rerank import load_doc_text, Reranker, rerank
 from repool import new_candidates, grader_doc_text
+from hybrid import rrf_fuse, dedup_union
 
 DATA = Path(__file__).parent.parent / "data"
 CANDIDATES_PATH = DATA / "repool_candidates.json"
@@ -53,12 +54,18 @@ def main():
     empty_text = 0
     for qid, row in queries.items():
         q = row["query"]
-        bm = [d for d, _ in search(index, q, k=100)]
-        dn = [d for d, _ in dense_search(vindex, embedder, q, k=POOL_DEPTH)]
+        bm_pairs = search(index, q, k=100)
+        dn_pairs = dense_search(vindex, embedder, q, k=100)
+        bm = [d for d, _ in bm_pairs]
+        dn = [d for d, _ in dn_pairs]
         # Rerank sees BM25F's full top-100 (not bm[:POOL_DEPTH]) so it can surface
         # rank-11..100 docs into its top-POOL_DEPTH — the point of reranking.
         rr = [d for d, _ in rerank(reranker, q, bm, doc_text, k=POOL_DEPTH)]
-        new = new_candidates([bm[:POOL_DEPTH], dn, rr], judged[qid])
+        # Hybrids: RRF-fuse the two full ranked lists; rerank their dedup'd union.
+        hrrf = [d for d, _ in rrf_fuse([bm_pairs, dn_pairs])[:POOL_DEPTH]]
+        union = dedup_union([bm_pairs, dn_pairs])
+        hrr = [d for d, _ in rerank(reranker, q, union, doc_text, k=POOL_DEPTH)]
+        new = new_candidates([bm[:POOL_DEPTH], dn[:POOL_DEPTH], rr, hrrf, hrr], judged[qid])
         if not new:
             continue
         docs = []
