@@ -90,7 +90,7 @@ gate to decide whether to return BM25F alone or escalate to a more costly model.
 If the margin between BM25F's top score and its k-th score (normalized:
 `(s₀ − sₖ)/s₀`) meets the threshold `TAU = 0.30`, the query is served by BM25F
 with no further ranking. Otherwise, the router escalates: non-ASCII queries
-route to `hybrid_rrf` (dense + BM25F fusion, no model), all others to
+route to `hybrid_rrf` (dense + BM25F fusion, no cross-encoder), all others to
 `bm25_rerank` (cross-encoder reranking of BM25F's top-100).
 
 On the re-pooled qrels (n=200), the router achieves **NDCG@10 0.74** (within

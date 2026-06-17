@@ -24,7 +24,10 @@ def bm25_margin(scored, k=10):
 
 def escalation_target(query):
     """Pick the escalation retriever: non-ASCII queries (≈ non-English) go to
-    dense fusion (no cross-encoder); everything else to cross-encoder rerank."""
+    dense fusion (no cross-encoder); everything else to cross-encoder rerank.
+
+    Runs on the RAW query text (not tokenized) by design — accent folding in the
+    tokenizer would erase the non-ASCII signal this rule relies on."""
     if any(ord(c) > 127 for c in query):
         return "hybrid_rrf"
     return "bm25_rerank"
