@@ -1,5 +1,6 @@
 # Cost-routing retriever: cheap BM25F first, escalate only when uncertain.
-# TAU is the BM25F-confidence gate threshold; retune with scripts/tune_router.py.
+# TAU is the BM25F-confidence gate threshold; tuned via scripts/tune_router.py
+# to the fewest-cross-encoder-calls value holding NDCG@10 >= 0.74.
 
 from hybrid import rrf_fuse
 
