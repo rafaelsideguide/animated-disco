@@ -36,7 +36,7 @@ class VectorIndex:
         # index (no incremental add_items after build without resize_index).
         index = hnswlib.Index(space="cosine", dim=self.dim)
         index.init_index(max_elements=n, ef_construction=_EF_CONSTRUCTION, M=_M)
-        index.add_items(vectors.astype(np.float32), np.arange(n))
+        index.add_items(vectors.astype(np.float32, copy=False), np.arange(n))
         index.set_ef(_EF_QUERY)
         self._index = index
         self.doc_ids = list(doc_ids)
@@ -45,7 +45,7 @@ class VectorIndex:
         if self._index is None or not self.doc_ids:
             return []
         k = min(k, len(self.doc_ids))
-        labels, distances = self._index.knn_query(vector.astype(np.float32), k=k)
+        labels, distances = self._index.knn_query(vector.astype(np.float32, copy=False), k=k)
         return [
             (self.doc_ids[int(lab)], 1.0 - float(dist))
             for lab, dist in zip(labels[0], distances[0])

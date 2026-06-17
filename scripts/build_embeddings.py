@@ -42,6 +42,7 @@ def main():
     flush()
 
     vectors = np.vstack(chunks)
+    del chunks
     print(f"  vectors: {vectors.shape}")
 
     print("Building hnsw index...")

@@ -69,10 +69,12 @@ class TestVectorIndex(unittest.TestCase):
 
 
 class TestEmbedText(unittest.TestCase):
-    def test_concatenates_fields_and_caps_body(self):
-        out = embed_text({"title": "T", "headings": "H", "body": "B" * 1000})
-        self.assertTrue(out.startswith("T H "))
-        self.assertLessEqual(len(out), 512 + 4)  # body capped at 512 chars
+    def test_concatenates_fields_and_caps_headings_and_body(self):
+        out = embed_text({"title": "T", "headings": "H" * 1000, "body": "B" * 1000})
+        self.assertTrue(out.startswith("T "))
+        # title(1) + sep(1) + headings(512) + sep(1) + body(512)
+        self.assertLessEqual(len(out), 1 + 1 + 512 + 1 + 512)
+        self.assertGreater(len(out), 512 + 512)  # both caps contribute, not just one
 
     def test_missing_fields(self):
         self.assertEqual(embed_text({}), "")
@@ -83,7 +85,7 @@ class TestEmbedderIntegration(unittest.TestCase):
         try:
             from dense import Embedder
             v = Embedder().encode(["hello world"])
-        except Exception as e:  # model download/load unavailable (offline/CI)
+        except (ImportError, OSError) as e:  # package missing / model files unavailable
             raise unittest.SkipTest(f"embedding model unavailable: {e}")
         self.assertEqual(v.shape, (1, 384))
         self.assertAlmostEqual(float(np.linalg.norm(v[0])), 1.0, places=3)
