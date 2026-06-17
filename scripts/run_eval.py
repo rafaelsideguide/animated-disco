@@ -3,12 +3,10 @@ _scripts_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path = [p for p in sys.path if os.path.abspath(p) != _scripts_dir]
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-import pickle
 import json
 import argparse
 import pathlib
 
-from search import search
 import eval as eval_module
 
 DATA = pathlib.Path(__file__).parent.parent / "data"
@@ -84,6 +82,8 @@ def main():
         def retrieve(q):
             return dense_search(vindex, embedder, q, k=100)
     else:
+        import pickle
+        from search import search
         with open(DATA / "index.pkl", "rb") as f:
             index = pickle.load(f)
         def retrieve(q):
