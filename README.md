@@ -64,6 +64,25 @@ The index (`src/index.py`) stores per-field term frequencies and lengths;
 each field's length via per-field `B`. Changing parsing, fields, or weights
 requires rebuilding the index.
 
+### Dense retrieval & cross-encoder reranking
+
+`src/dense.py` adds a multilingual sentence-transformer + hnswlib kNN retriever
+(`scripts/build_embeddings.py`); `src/rerank.py` reranks BM25F's top-100 with a
+multilingual cross-encoder over `data/doc_text.pkl`. Evaluate either via
+`run_eval.py --retriever {dense,bm25_rerank}`.
+
+### Re-pooled judgments
+
+The original `judgments.jsonl` was a depth-20 pool from the BM25 baseline, which
+under-measured the semantic/rerank retrievers (they surface relevant docs the
+pool never judged). `judgments.jsonl` was enriched (source
+`claude-code-pooled-2026`) by pooling the top-10 of BM25F + dense + rerank per
+query and grading the new docs with Claude Code subagents:
+`scripts/build_repool_candidates.py` → `scripts/repool_batches.py split` →
+grade batches → `scripts/repool_batches.py gather` →
+`scripts/merge_repool_grades.py`. Top-10 judgment coverage rose ~0.60 → 0.99; on
+the enriched qrels NDCG@10 is BM25F 0.74, dense 0.60, BM25F+rerank 0.79.
+
 AI tools (Cursor, Claude Code, etc.) are encouraged throughout the interview.
 
 Judgments were generated with LLM assistance.
