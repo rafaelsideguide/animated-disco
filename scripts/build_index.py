@@ -40,11 +40,11 @@ def main():
     with open(INDEX_PATH, "wb") as f:
         pickle.dump(index, f)
 
-    avg_len = sum(index.doc_lengths) / total_docs if total_docs else 0
     print(f"\nDone.")
     print(f"  Vocab size : {len(index.term_dict):,}")
     print(f"  Total docs : {total_docs:,}")
-    print(f"  Avg doc len: {avg_len:.1f} tokens")
+    for f in FIELDS:
+        print(f"  Avg {f} len: {index.avgdl[f]:.1f} tokens")
 
 
 if __name__ == "__main__":

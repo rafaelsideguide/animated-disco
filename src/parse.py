@@ -9,6 +9,7 @@ _URL_RE = re.compile(r"https?://\S+")               # bare urls
 _LIST_MARKER_RE = re.compile(r"^\s*([-*+]|\d+\.)\s+", re.M)
 _MD_NOISE_RE = re.compile(r"[#>*`|\[\]]")           # leftover markdown markers (keep underscores: snake_case)
 _HEADING_LINE_RE = re.compile(r"^\s{0,3}#{1,6}\s+(.*)$", re.M)
+_HEADING_LINE_FULL_RE = re.compile(r"^\s{0,3}#{1,6}.*$", re.M)
 _WS_RE = re.compile(r"\s+")
 
 
@@ -45,15 +46,17 @@ def url_tokens(url: str) -> str:
     if len(parts) > 1:
         host = " ".join(parts[:-1])
     text = host + " " + parsed.path.replace("/", " ")
-    return _WS_RE.sub(" ", text).strip()
+    return _WS_RE.sub(" ", text.replace("_", " ")).strip()
 
 
 def parse_document(doc: dict) -> dict:
-    """Map a corpus doc to its four field strings."""
+    """Map a corpus doc to its four field strings. Heading lines are removed from
+    the body so heading terms live only in the `headings` field (disjoint fields)."""
     md = doc.get("markdown") or ""
+    body_md = _HEADING_LINE_FULL_RE.sub(" ", md)
     return {
         "title": doc.get("title") or "",
         "headings": extract_headings(md),
         "url": url_tokens(doc.get("url") or ""),
-        "body": clean_markdown(md)[:BODY_CHAR_CAP],
+        "body": clean_markdown(body_md)[:BODY_CHAR_CAP],
     }

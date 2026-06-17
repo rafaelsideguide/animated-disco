@@ -50,6 +50,9 @@ class TestUrlTokens(unittest.TestCase):
     def test_empty(self):
         self.assertEqual(url_tokens(""), "")
 
+    def test_underscores_split(self):
+        self.assertEqual(url_tokens("https://ex.com/api_reference/v2"), "ex api reference v2")
+
 
 class TestParseDocument(unittest.TestCase):
     def test_returns_all_fields(self):
@@ -59,7 +62,7 @@ class TestParseDocument(unittest.TestCase):
         self.assertEqual(fields["title"], "T")
         self.assertEqual(fields["headings"], "H")
         self.assertEqual(fields["url"], "ex a")
-        self.assertEqual(fields["body"], "H x body")
+        self.assertEqual(fields["body"], "x body")
 
     def test_body_capped(self):
         doc = {"title": "", "url": "", "markdown": "word " * 1000}
@@ -67,6 +70,12 @@ class TestParseDocument(unittest.TestCase):
 
     def test_missing_fields_default_empty(self):
         self.assertEqual(parse_document({}), {"title": "", "headings": "", "url": "", "body": ""})
+
+    def test_body_excludes_heading_lines(self):
+        doc = {"title": "", "url": "", "markdown": "# Setup Guide\nrun the installer now"}
+        fields = parse_document(doc)
+        self.assertEqual(fields["headings"], "Setup Guide")
+        self.assertEqual(fields["body"], "run the installer now")
 
 
 if __name__ == "__main__":
