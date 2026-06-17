@@ -17,7 +17,10 @@ from hybrid import rrf_fuse, dedup_union
 
 DATA = Path(__file__).parent.parent / "data"
 CANDIDATES_PATH = DATA / "repool_candidates.json"
-POOL_DEPTH = 10
+# Pool depth per retriever. Set to 25 (above the original depth-20 BM25 pool) so
+# the union of all five retrievers' top-25 is judged — deeper than the prior
+# depth-10 re-pool, giving margin above the NDCG@10 cutoff.
+POOL_DEPTH = 25
 
 
 def load_queries():

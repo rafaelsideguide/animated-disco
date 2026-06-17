@@ -247,6 +247,10 @@ already corrected for dense. The hybrids surface top-10 docs the depth-10 pool
 fair comparison we extend the candidate pool to include the two hybrids' top-10,
 grade the newly-surfaced docs, and re-evaluate.
 
+**Pool depth (updated 2026-06-17 per user):** `POOL_DEPTH = 25` (was 10), above
+the original depth-20 BM25 pool, so the union of all five retrievers' top-25 gets
+judged — extra margin above the NDCG@10 cutoff. "top-10" below means "top-`POOL_DEPTH`".
+
 **Files:**
 - Modify: `scripts/build_repool_candidates.py` (the per-query pooling loop in `main()`)
 
