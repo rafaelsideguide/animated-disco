@@ -70,7 +70,11 @@ def judgment_coverage(results, judgments, k=10):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--breakdown", action="store_true")
-    parser.add_argument("--retriever", choices=["bm25", "dense", "bm25_rerank"], default="bm25")
+    parser.add_argument(
+        "--retriever",
+        choices=["bm25", "dense", "bm25_rerank", "hybrid_rrf", "hybrid_rerank"],
+        default="bm25",
+    )
     args = parser.parse_args()
 
     queries = load_jsonl(DATA / "queries.jsonl")
@@ -99,6 +103,34 @@ def main():
             index = pickle.load(f)
         def retrieve(q):
             return search(index, q, k=100)
+    elif args.retriever == "hybrid_rrf":
+        import pickle
+        from search import search
+        from dense import load_dense, dense_search
+        from hybrid import rrf_fuse
+        with open(DATA / "index.pkl", "rb") as f:
+            index = pickle.load(f)
+        vindex, embedder = load_dense(DATA)
+        def retrieve(q):
+            bm25 = search(index, q, k=100)
+            dense = dense_search(vindex, embedder, q, k=100)
+            return rrf_fuse([bm25, dense])
+    elif args.retriever == "hybrid_rerank":
+        import pickle
+        from search import search
+        from dense import load_dense, dense_search
+        from hybrid import dedup_union
+        from rerank import load_doc_text, Reranker, rerank
+        with open(DATA / "index.pkl", "rb") as f:
+            index = pickle.load(f)
+        vindex, embedder = load_dense(DATA)
+        doc_text = load_doc_text(DATA)
+        reranker = Reranker()
+        def retrieve(q):
+            bm25 = search(index, q, k=100)
+            dense = dense_search(vindex, embedder, q, k=100)
+            union = dedup_union([bm25, dense])
+            return rerank(reranker, q, union, doc_text, k=100)
     else:
         raise ValueError(f"Unknown retriever: {args.retriever}")
 
