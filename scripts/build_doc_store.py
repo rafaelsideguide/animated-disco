@@ -9,17 +9,18 @@ import pickle
 from pathlib import Path
 
 from parse import parse_document
-from rerank import RERANK_BODY_CHARS
+from rerank import RERANK_BODY_CHARS, _DOC_TEXT_FILE
 
 DATA = Path(__file__).parent.parent / "data"
 CORPUS_PATH = DATA / "corpus.jsonl"
-DOC_TEXT_PATH = DATA / "doc_text.pkl"
+DOC_TEXT_PATH = DATA / _DOC_TEXT_FILE
 
 
 def doc_store_text(doc: dict) -> str:
     fields = parse_document(doc)
+    headings = fields["headings"][:RERANK_BODY_CHARS]
     body = fields["body"][:RERANK_BODY_CHARS]
-    return f"{fields['title']} {fields['headings']} {body}".strip()
+    return f"{fields['title']} {headings} {body}".strip()
 
 
 def main():

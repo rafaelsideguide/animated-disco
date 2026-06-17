@@ -92,13 +92,15 @@ def main():
         def retrieve(q):
             candidates = [d for d, _ in search(index, q, k=100)]
             return rerank(reranker, q, candidates, doc_text, k=100)
-    else:
+    elif args.retriever == "bm25":
         import pickle
         from search import search
         with open(DATA / "index.pkl", "rb") as f:
             index = pickle.load(f)
         def retrieve(q):
             return search(index, q, k=100)
+    else:
+        raise ValueError(f"Unknown retriever: {args.retriever}")
 
     results = {
         qid: [doc_id for doc_id, _score in retrieve(row["query"])]

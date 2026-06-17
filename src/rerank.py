@@ -19,10 +19,10 @@ class Reranker:
             self._model = CrossEncoder(self.model_name)
         return self._model
 
-    def score_pairs(self, query: str, texts: list[str]) -> list[float]:
+    def score_pairs(self, query: str, texts: list[str], batch_size: int = 32) -> list[float]:
         if not texts:
             return []
-        scores = self._ensure().predict([(query, t) for t in texts])
+        scores = self._ensure().predict([(query, t) for t in texts], batch_size=batch_size)
         return [float(s) for s in scores]
 
 
