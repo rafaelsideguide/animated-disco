@@ -1,3 +1,4 @@
 data/corpus.jsonl filter=lfs diff=lfs merge=lfs -text
 data/index.pkl filter=lfs diff=lfs merge=lfs -text
 data/hnsw.bin filter=lfs diff=lfs merge=lfs -text
+data/doc_text.pkl filter=lfs diff=lfs merge=lfs -text
