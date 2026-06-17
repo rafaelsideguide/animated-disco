@@ -72,16 +72,25 @@ def judgment_coverage(results, judgments, k=10):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--breakdown", action="store_true")
+    parser.add_argument("--retriever", choices=["bm25", "dense"], default="bm25")
     args = parser.parse_args()
-
-    with open(DATA / "index.pkl", "rb") as f:
-        index = pickle.load(f)
 
     queries = load_jsonl(DATA / "queries.jsonl")
     judgments = load_judgments(DATA / "judgments.jsonl")
 
+    if args.retriever == "dense":
+        from dense import load_dense, dense_search
+        vindex, embedder = load_dense(DATA)
+        def retrieve(q):
+            return dense_search(vindex, embedder, q, k=100)
+    else:
+        with open(DATA / "index.pkl", "rb") as f:
+            index = pickle.load(f)
+        def retrieve(q):
+            return search(index, q, k=100)
+
     results = {
-        qid: [doc_id for doc_id, _score in search(index, row["query"], k=100)]
+        qid: [doc_id for doc_id, _score in retrieve(row["query"])]
         for qid, row in queries.items()
     }
 
