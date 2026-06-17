@@ -72,7 +72,7 @@ def main():
     parser.add_argument("--breakdown", action="store_true")
     parser.add_argument(
         "--retriever",
-        choices=["bm25", "dense", "bm25_rerank", "hybrid_rrf", "hybrid_rerank"],
+        choices=["bm25", "dense", "bm25_rerank", "hybrid_rrf", "hybrid_rerank", "router"],
         default="bm25",
     )
     args = parser.parse_args()
@@ -131,6 +131,24 @@ def main():
             dense = dense_search(vindex, embedder, q, k=100)
             union = dedup_union([bm25, dense])
             return rerank(reranker, q, union, doc_text, k=100)
+    elif args.retriever == "router":
+        import pickle
+        from search import search
+        from dense import load_dense, dense_search
+        from rerank import load_doc_text, Reranker, rerank
+        from route import CostRouter, TAU
+        with open(DATA / "index.pkl", "rb") as f:
+            index = pickle.load(f)
+        vindex, embedder = load_dense(DATA)
+        doc_text = load_doc_text(DATA)
+        reranker = Reranker()
+        router = CostRouter(
+            bm25_fn=lambda q: search(index, q, k=100),
+            dense_fn=lambda q: dense_search(vindex, embedder, q, k=100),
+            rerank_fn=lambda q, cand: rerank(reranker, q, cand, doc_text, k=100),
+            tau=TAU,
+        )
+        retrieve = router.retrieve
     else:
         raise ValueError(f"Unknown retriever: {args.retriever}")
 
@@ -190,6 +208,16 @@ def main():
         print(f"\n--- Judgment coverage ---")
         print(f"Mean judged-fraction in top-10:      {mean_frac:.2f}")
         print(f"Queries with <50% judged in top-10:  {low} ({low_pct:.0f}%)")
+
+    if args.retriever == "router":
+        s = router.stats
+        n = sum(s[t] for t in ("bm25_only", "hybrid_rrf", "bm25_rerank"))
+        print(f"\n--- Router cost (tau={router.tau}) ---")
+        print(f"Tier usage:  bm25_only={s['bm25_only']}  "
+              f"hybrid_rrf={s['hybrid_rrf']}  bm25_rerank={s['bm25_rerank']}  (n={n})")
+        print(f"Cross-encoder calls:  {s['cross_encoder_calls']}/{n}  "
+              f"(always-rerank would be {n})")
+        print(f"Query-doc pairs scored:  {s['pairs_scored']:,}")
 
 
 if __name__ == "__main__":
