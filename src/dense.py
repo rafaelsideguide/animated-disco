@@ -23,12 +23,17 @@ class VectorIndex:
 
     def __init__(self, dim: int = DIM):
         self.dim = dim
+        self.model_name = MODEL_NAME
         self._index = None
         self.doc_ids: list[str] = []
 
     def build(self, vectors: np.ndarray, doc_ids: list[str]) -> None:
         n = len(doc_ids)
+        if n == 0:
+            raise ValueError("cannot build an index from zero vectors")
         assert vectors.shape == (n, self.dim), f"expected ({n}, {self.dim}), got {vectors.shape}"
+        # Fixed capacity: max_elements is the corpus size, so this is a build-once
+        # index (no incremental add_items after build without resize_index).
         index = hnswlib.Index(space="cosine", dim=self.dim)
         index.init_index(max_elements=n, ef_construction=_EF_CONSTRUCTION, M=_M)
         index.add_items(vectors.astype(np.float32), np.arange(n))
@@ -47,11 +52,13 @@ class VectorIndex:
         ]
 
     def save(self, directory) -> None:
+        if self._index is None:
+            raise ValueError("index has not been built")
         directory = Path(directory)
         self._index.save_index(str(directory / _INDEX_FILE))
         with open(directory / _META_FILE, "wb") as f:
             pickle.dump(
-                {"doc_ids": self.doc_ids, "dim": self.dim, "model_name": MODEL_NAME}, f
+                {"doc_ids": self.doc_ids, "dim": self.dim, "model_name": self.model_name}, f
             )
 
     @classmethod
@@ -60,6 +67,7 @@ class VectorIndex:
         with open(directory / _META_FILE, "rb") as f:
             meta = pickle.load(f)
         obj = cls(dim=meta["dim"])
+        obj.model_name = meta["model_name"]
         obj.doc_ids = meta["doc_ids"]
         index = hnswlib.Index(space="cosine", dim=obj.dim)
         index.load_index(str(directory / _INDEX_FILE), max_elements=len(obj.doc_ids))
@@ -69,9 +77,10 @@ class VectorIndex:
 
 
 def embed_text(fields: dict) -> str:
-    """Build the per-document embedding input from parsed fields."""
+    """Build the per-document embedding input from parsed fields. Headings and
+    body are length-capped so neither crowds out the model's 128-token window."""
     title = fields.get("title", "")
-    headings = fields.get("headings", "")
+    headings = fields.get("headings", "")[:BODY_EMBED_CHARS]
     body = fields.get("body", "")[:BODY_EMBED_CHARS]
     return f"{title} {headings} {body}".strip()
 
@@ -106,4 +115,5 @@ def dense_search(vindex: VectorIndex, embedder: Embedder, query: str, k: int = 1
 
 
 def load_dense(directory) -> tuple[VectorIndex, Embedder]:
-    return VectorIndex.load(directory), Embedder()
+    vindex = VectorIndex.load(directory)
+    return vindex, Embedder(vindex.model_name)

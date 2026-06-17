@@ -52,12 +52,27 @@ class TestVectorIndex(unittest.TestCase):
         idx = VectorIndex(dim=4)
         self.assertEqual(idx.query(np.array([1, 0, 0, 0], dtype=np.float32), k=5), [])
 
+    def test_save_unbuilt_raises(self):
+        idx = VectorIndex(dim=4)
+        with tempfile.TemporaryDirectory() as d:
+            with self.assertRaises(ValueError):
+                idx.save(d)
+
+    def test_model_name_roundtrips(self):
+        v, ids = self._vecs()
+        idx = VectorIndex(dim=4)
+        idx.build(v, ids)
+        with tempfile.TemporaryDirectory() as d:
+            idx.save(d)
+            loaded = VectorIndex.load(d)
+        self.assertEqual(loaded.model_name, idx.model_name)
+
 
 class TestEmbedText(unittest.TestCase):
     def test_concatenates_fields_and_caps_body(self):
         out = embed_text({"title": "T", "headings": "H", "body": "B" * 1000})
         self.assertTrue(out.startswith("T H "))
-        self.assertLessEqual(len(out), 512 + 8)  # body capped at 512 chars
+        self.assertLessEqual(len(out), 512 + 4)  # body capped at 512 chars
 
     def test_missing_fields(self):
         self.assertEqual(embed_text({}), "")
